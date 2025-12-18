@@ -1,7 +1,10 @@
 import sys
 import traceback
+import os
 
-sys.path.append("/opt/mri4all/console/external/")
+# Dynamically add external path based on current file location
+_console_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(os.path.join(_console_path, "external"))
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *  # type: ignore

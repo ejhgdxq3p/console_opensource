@@ -1,4 +1,5 @@
 import subprocess
+import platform
 
 import common.logger as logger
 
@@ -12,6 +13,11 @@ def get_services() -> list[Service]:
 
 
 def control_service(action: ServiceAction, service: Service) -> bool | None:
+    # Skip service control on Windows (systemctl is Linux-only)
+    if platform.system() == "Windows":
+        log.info(f"Skipping {action.value} {service.value} (not supported on Windows)")
+        return None
+    
     command = ["sudo", "systemctl", "--no-block", action.value, service.value]
     result = subprocess.run(
         command,

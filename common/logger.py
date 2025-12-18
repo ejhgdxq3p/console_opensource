@@ -43,8 +43,12 @@ def get_logger():
         ch.setFormatter(formatter)
         logger.addHandler(ch)
 
+        # Create logs directory if it doesn't exist
+        logs_dir = os.path.join(rt.get_base_path(), "logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        
         file_handler = RotatingFileHandler(
-            f"/opt/mri4all/logs/{rt.service_name}.log", maxBytes=1500000, backupCount=5
+            os.path.join(logs_dir, f"{rt.service_name}.log"), maxBytes=1500000, backupCount=5
         )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)

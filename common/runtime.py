@@ -1,9 +1,11 @@
 import os
 import __main__ as main
 
-# base_path = os.path.dirname(os.path.dirname(os.path.realpath(main.__file__)))
-# Hard-coding the base path for now to avoid problems with starting scripts from different locations
-base_path = "/opt/mri4all"
+# Dynamically determine the base path based on OS
+# The console directory is the parent of the 'common' folder
+_console_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+# Set base_path to the parent of console (simulating /opt/mri4all structure)
+base_path = os.path.dirname(_console_path)
 
 service_name = "unknown"
 current_task_id = ""
@@ -29,8 +31,8 @@ def get_base_path():
 
 
 def get_console_path():
-    """Get the base path of the MRI4ALL installation."""
-    return base_path + "/console"
+    """Get the console path of the MRI4ALL installation."""
+    return _console_path
 
 
 def set_current_task_id(task_id: str):

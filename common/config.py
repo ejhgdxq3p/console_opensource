@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from pydantic import BaseModel, Field
 from typing import Dict, Optional, Literal, List
 
@@ -23,7 +24,10 @@ class DicomTarget(BaseModel):
     aet_source: Optional[str] = ""
 
 
-mri4_all_config_path = Path(runtime.get_base_path()) / "config/mri4all.json"
+# Ensure config directory exists
+_config_dir = Path(runtime.get_base_path()) / "config"
+_config_dir.mkdir(parents=True, exist_ok=True)
+mri4_all_config_path = _config_dir / "mri4all.json"
 
 
 class Configuration(BaseModel):

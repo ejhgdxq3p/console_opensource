@@ -1,6 +1,7 @@
 import atexit
 import json
 import os
+import platform
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, Literal, Optional, Union
@@ -23,6 +24,9 @@ from common.ipc.messages import *
 
 from common.types import ScanTask
 import common.helper as helper
+
+# Check if running on Windows
+IS_WINDOWS = platform.system() == "Windows"
 
 
 class PipeFile(Enum):
@@ -99,7 +103,15 @@ class Communicator(QObject, Helper):
     def __init__(self, pipe_end: PipeEnd):
         in_, out_ = pipe_end.value
         self.pipe_end = pipe_end
+        self._disabled = IS_WINDOWS  # Disable IPC on Windows (no mkfifo support)
         super().__init__()
+        
+        if self._disabled:
+            log.info("IPC disabled on Windows (mkfifo not supported)")
+            self.in_file = None
+            self.out_file = None
+            return
+            
         Path(self.base).mkdir(parents=True, exist_ok=True)
 
         self.in_file = str(Path(self.base, in_.value))
@@ -109,11 +121,15 @@ class Communicator(QObject, Helper):
         atexit.register(self.cleanup)
 
     def is_open(self):
+        if self._disabled:
+            return False
         if not os.path.exists(self.out_file):
             return False
         return True
 
     def cleanup(self):
+        if self._disabled:
+            return
         try:
             os.unlink(self.in_file)
         except:
@@ -122,12 +138,17 @@ class Communicator(QObject, Helper):
             )
 
     def listen(self):
+        if self._disabled:
+            log.info("IPC listen skipped on Windows")
+            return
         if self.receive_thread:
             raise Exception("already listening")
         self.receive_thread = threading.Thread(target=self._listen_emit, daemon=True)
         self.receive_thread.start()
 
     def _send(self, obj: FifoMessageType, error=False):
+        if self._disabled:
+            return False
         if not os.path.exists(self.out_file):
             return False
         with open(self.out_file, "w") as f:
@@ -136,6 +157,8 @@ class Communicator(QObject, Helper):
         return True
 
     def _query(self, obj):
+        if self._disabled:
+            raise Exception("IPC not available on Windows")
         if not self._send(obj):
             raise Exception("Other end of the pipe is not available.")
 
@@ -160,12 +183,16 @@ class Communicator(QObject, Helper):
             os.mkfifo(FIFO)
 
     def _listen(self):
+        if self._disabled:
+            return
         while True:
             with open(self.in_file) as fifo:
                 for line in fifo:
                     yield self.parse(line)
 
     def _listen_emit(self):
+        if self._disabled:
+            return
         for o in self._listen():
             self.received.emit(o)
             # self.handle(o)
