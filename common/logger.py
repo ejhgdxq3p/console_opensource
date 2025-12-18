@@ -79,11 +79,19 @@ def get_loglevel() -> int:
 class LoggerStdCapture:
     def __init__(self, level):
         self.level = level
+        self._in_write = False  # Prevent recursive calls
 
     def write(self, message):
+        # Prevent recursive calls that cause infinite loops
+        if self._in_write:
+            return
         # The check for empty lines reduces the amount printed to the logger
-        if message != "\n":
-            self.level(message)
+        if message and message != "\n":
+            try:
+                self._in_write = True
+                self.level(message)
+            finally:
+                self._in_write = False
 
     def flush(self):
         pass

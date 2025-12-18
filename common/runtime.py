@@ -1,11 +1,26 @@
 import os
+import sys
 import __main__ as main
 
-# Dynamically determine the base path based on OS
-# The console directory is the parent of the 'common' folder
-_console_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-# Set base_path to the parent of console (simulating /opt/mri4all structure)
-base_path = os.path.dirname(_console_path)
+
+def _get_paths():
+    """Determine paths based on whether running as PyInstaller bundle or normal Python."""
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller bundle (single exe or folder)
+        # sys._MEIPASS is the temp folder where files are extracted
+        bundle_dir = sys._MEIPASS
+        # For exe, use the directory where the exe is located for data storage
+        exe_dir = os.path.dirname(sys.executable)
+        return bundle_dir, exe_dir
+    else:
+        # Running in normal Python environment
+        console_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        base_path = os.path.dirname(console_path)
+        return console_path, base_path
+
+
+# Get paths
+_console_path, base_path = _get_paths()
 
 service_name = "unknown"
 current_task_id = ""

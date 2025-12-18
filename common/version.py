@@ -1,10 +1,24 @@
 import os
+import sys
 from pathlib import Path
 import common.logger as logger
 import common.runtime as rt
 
 # Create local logger instance
 log = logger.get_logger()
+
+
+def get_version_file_path():
+    """Get the VERSION file path, works both in development and PyInstaller bundle."""
+    # Check if running as PyInstaller bundle
+    if getattr(sys, 'frozen', False):
+        # Running in PyInstaller bundle
+        bundle_dir = sys._MEIPASS
+        version_path = os.path.join(bundle_dir, "VERSION")
+        if os.path.exists(version_path):
+            return version_path
+    # Running in normal Python environment
+    return os.path.join(rt.get_console_path(), "VERSION")
 
 
 class SemanticVersion:
@@ -73,7 +87,7 @@ class SemanticVersion:
         set to '0.0.0-invalid.0' and all numerical version numbers are set to 0."""
 
         # Read the version string from the file VERSION in mercure's app folder
-        version_filepath = rt.get_console_path() + "/VERSION"
+        version_filepath = get_version_file_path()
         version_file = Path(version_filepath)
 
         if not version_file.exists():
